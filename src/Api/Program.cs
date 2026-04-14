@@ -1,8 +1,21 @@
+using Infrastructure;
+using Domain.Models;
+using Domain.Events;
+using Scalar.AspNetCore;
+
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddOpenApi();
+builder.Services.AddSingleton(sp =>
+{
+    // var endpoint = builder.Configuration["EventGrid:Endpoint"];
+    // var key = builder.Configuration["EventGrid:Key"];
+    return new EventGridPublisher();
+});
 
 var app = builder.Build();
 
@@ -10,32 +23,25 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+    app.MapScalarApiReference();
 }
 
 app.UseHttpsRedirection();
 
-var summaries = new[]
-{
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
 
-app.MapGet("/weatherforecast", () =>
+app.MapPost("/bookings", async (BookingRequest request, EventGridPublisher publisher) =>
 {
-    var forecast =  Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.WithName("GetWeatherForecast");
+    var evt = new BookingCreatedEvent(
+        BookingId: Guid.NewGuid(),
+        CustomerName: request.CustomerName,
+        CreatedAt: DateTime.UtcNow
+    );
+
+    await publisher.PublishBookingCreatedAsync(evt);
+
+    return Results.Ok(new { Message = "Booking Created", evt.BookingId });
+});
+
 
 app.Run();
 
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}
