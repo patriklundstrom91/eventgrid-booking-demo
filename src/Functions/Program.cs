@@ -1,5 +1,4 @@
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Azure.Functions.Worker;
 
 var host = new HostBuilder()
@@ -7,4 +6,3 @@ var host = new HostBuilder()
     .Build();
 
 host.Run();
-

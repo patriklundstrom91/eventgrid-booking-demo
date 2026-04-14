@@ -28,6 +28,8 @@
 //     }
 // }
 using System.Net.Http.Json;
+using System.Text;
+using System.Text.Json;
 using Domain.Events;
 
 namespace Infrastructure;
@@ -43,12 +45,21 @@ public class EventGridPublisher
 
     public async Task PublishBookingCreatedAsync(BookingCreatedEvent evt)
     {
-        // Skicka eventet till vår lokala EventGrid-emulator (HttpTrigger)
-        var response = await _http.PostAsJsonAsync(
-            "http://localhost:7071/api/LocalEventGrid",
-            evt
-        );
+        var json = JsonSerializer.Serialize(evt);
+
+        var request = new HttpRequestMessage(
+            HttpMethod.Post,
+            "http://localhost:7071/api/LocalEventGrid")
+        {
+            Content = new StringContent(json, Encoding.UTF8, "application/json")
+        };
+
+        // Viktigt: samma header som Event Grid skickar
+        request.Headers.Add("aeg-event-type", "Notification");
+
+        var response = await _http.SendAsync(request);
 
         response.EnsureSuccessStatusCode();
     }
+
 }
