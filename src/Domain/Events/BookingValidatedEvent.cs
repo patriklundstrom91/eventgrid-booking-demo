@@ -1,9 +1,8 @@
 namespace Domain.Events;
 
-public record BookingProcessedEvent(
+public record BookingValidatedEvent(
     Guid BookingId,
     string CustomerName,
     DateTime CreatedAt,
-    DateTime ValidatedAt,
-    DateTime ProcessedAt
+    DateTime ValidatedAt
 );
