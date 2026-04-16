@@ -2,24 +2,35 @@ using Infrastructure;
 using Domain.Models;
 using Domain.Events;
 using Scalar.AspNetCore;
-
+using System.Text.Json.Schema;
+using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddOpenApi();
+
 builder.Services.AddSingleton(sp =>
 {
-    // var endpoint = builder.Configuration["EventGrid:Endpoint"];
-    // var key = builder.Configuration["EventGrid:Key"];
     return new EventGridPublisher();
+});
+
+var corsPolicy = "_allowFrontend";
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(name: corsPolicy,
+        policy =>
+        {
+            policy.AllowAnyOrigin()
+                  .AllowAnyHeader()
+                  .AllowAnyMethod();
+        });
 });
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+app.UseCors(corsPolicy);
+
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
@@ -27,7 +38,6 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
 
 app.MapPost("/bookings", async (BookingRequest request, EventGridPublisher publisher) =>
 {
@@ -42,6 +52,19 @@ app.MapPost("/bookings", async (BookingRequest request, EventGridPublisher publi
     return Results.Ok(new { Message = "Booking Created", evt.BookingId });
 });
 
+app.MapGet("/api/events", () =>
+{
+
+    var path = Path.GetFullPath(
+        Path.Combine(AppContext.BaseDirectory,
+            "..", "..", "..", "..", "events.json")
+    );
+
+    if (!File.Exists(path))
+        return Results.Ok(new List<object>());
+
+    var json = File.ReadAllText(path);
+    return Results.Ok(JsonSerializer.Deserialize<List<object>>(json));
+});
 
 app.Run();
-

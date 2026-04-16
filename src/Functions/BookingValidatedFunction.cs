@@ -69,6 +69,13 @@ namespace functions
             var response = await _http.SendAsync(request);
 
             _logger.LogInformation("Forwarded BookingProcessed event: {status}", response.StatusCode);
+
+            EventLogger.LogEvent(new
+            {
+                Type = "BookingValidated",
+                Data = validated,
+                Timestamp = DateTime.UtcNow
+            });
         }
     }
 }

@@ -3,6 +3,7 @@ using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 using Domain.Events;
 using System.Text.Json;
+using System;
 
 namespace functions
 {
@@ -24,6 +25,13 @@ namespace functions
                 processed.BookingId,
                 processed.ProcessedAt
             );
+
+            EventLogger.LogEvent(new
+            {
+                Type = "BookingProcessed",
+                Data = processed,
+                Timestamp = DateTime.UtcNow
+            });
         }
     }
 }

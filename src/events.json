@@ -1,0 +1,122 @@
+[
+  {
+    "Type": "BookingProcessed",
+    "Data": {
+      "BookingId": "29ab58d2-0af4-4ae9-9b26-756f64eb8737",
+      "CustomerName": "Alf",
+      "CreatedAt": "2026-04-15T18:09:51.8831511Z",
+      "ValidatedAt": "2026-04-15T18:09:56.4592011Z",
+      "ProcessedAt": "2026-04-15T18:09:58.4838338Z"
+    },
+    "Timestamp": "2026-04-15T18:10:00.5270689Z"
+  },
+  {
+    "Type": "BookingValidated",
+    "Data": {
+      "BookingId": "29ab58d2-0af4-4ae9-9b26-756f64eb8737",
+      "CustomerName": "Alf",
+      "CreatedAt": "2026-04-15T18:09:51.8831511Z",
+      "ValidatedAt": "2026-04-15T18:09:56.4592011Z"
+    },
+    "Timestamp": "2026-04-15T18:10:00.5637892Z"
+  },
+  {
+    "Type": "BookingCreated",
+    "Data": {
+      "BookingId": "29ab58d2-0af4-4ae9-9b26-756f64eb8737",
+      "CustomerName": "Alf",
+      "CreatedAt": "2026-04-15T18:09:51.8831511Z"
+    },
+    "Timestamp": "2026-04-15T18:10:00.5726178Z"
+  },
+  {
+    "Type": "BookingProcessed",
+    "Data": {
+      "BookingId": "ebfac4da-2f3a-4837-9a3a-0e7371753290",
+      "CustomerName": "Mondo",
+      "CreatedAt": "2026-04-15T18:19:44.6409239Z",
+      "ValidatedAt": "2026-04-15T18:19:49.2276306Z",
+      "ProcessedAt": "2026-04-15T18:19:51.2603341Z"
+    },
+    "Timestamp": "2026-04-15T18:19:53.3046659Z"
+  },
+  {
+    "Type": "BookingValidated",
+    "Data": {
+      "BookingId": "ebfac4da-2f3a-4837-9a3a-0e7371753290",
+      "CustomerName": "Mondo",
+      "CreatedAt": "2026-04-15T18:19:44.6409239Z",
+      "ValidatedAt": "2026-04-15T18:19:49.2276306Z"
+    },
+    "Timestamp": "2026-04-15T18:19:53.3439169Z"
+  },
+  {
+    "Type": "BookingCreated",
+    "Data": {
+      "BookingId": "ebfac4da-2f3a-4837-9a3a-0e7371753290",
+      "CustomerName": "Mondo",
+      "CreatedAt": "2026-04-15T18:19:44.6409239Z"
+    },
+    "Timestamp": "2026-04-15T18:19:53.3497494Z"
+  },
+  {
+    "Type": "BookingProcessed",
+    "Data": {
+      "BookingId": "9758a275-4ebf-4e2d-9284-f2d976037fef",
+      "CustomerName": "Erik",
+      "CreatedAt": "2026-04-15T18:23:00.4113422Z",
+      "ValidatedAt": "2026-04-15T18:23:04.4953064Z",
+      "ProcessedAt": "2026-04-15T18:23:06.530473Z"
+    },
+    "Timestamp": "2026-04-15T18:23:08.5545488Z"
+  },
+  {
+    "Type": "BookingValidated",
+    "Data": {
+      "BookingId": "9758a275-4ebf-4e2d-9284-f2d976037fef",
+      "CustomerName": "Erik",
+      "CreatedAt": "2026-04-15T18:23:00.4113422Z",
+      "ValidatedAt": "2026-04-15T18:23:04.4953064Z"
+    },
+    "Timestamp": "2026-04-15T18:23:08.5577031Z"
+  },
+  {
+    "Type": "BookingCreated",
+    "Data": {
+      "BookingId": "9758a275-4ebf-4e2d-9284-f2d976037fef",
+      "CustomerName": "Erik",
+      "CreatedAt": "2026-04-15T18:23:00.4113422Z"
+    },
+    "Timestamp": "2026-04-15T18:23:08.559663Z"
+  },
+  {
+    "Type": "BookingProcessed",
+    "Data": {
+      "BookingId": "9b25c185-f4c7-4dd2-9f60-5d43af6fc4da",
+      "CustomerName": "Anna",
+      "CreatedAt": "2026-04-15T18:32:43.44527Z",
+      "ValidatedAt": "2026-04-15T18:32:47.5455945Z",
+      "ProcessedAt": "2026-04-15T18:32:49.5823242Z"
+    },
+    "Timestamp": "2026-04-15T18:32:51.6267126Z"
+  },
+  {
+    "Type": "BookingValidated",
+    "Data": {
+      "BookingId": "9b25c185-f4c7-4dd2-9f60-5d43af6fc4da",
+      "CustomerName": "Anna",
+      "CreatedAt": "2026-04-15T18:32:43.44527Z",
+      "ValidatedAt": "2026-04-15T18:32:47.5455945Z"
+    },
+    "Timestamp": "2026-04-15T18:32:51.6310423Z"
+  },
+  {
+    "Type": "BookingCreated",
+    "Data": {
+      "BookingId": "9b25c185-f4c7-4dd2-9f60-5d43af6fc4da",
+      "CustomerName": "Anna",
+      "CreatedAt": "2026-04-15T18:32:43.44527Z"
+    },
+    "Timestamp": "2026-04-15T18:32:51.6337379Z"
+  }
+]
