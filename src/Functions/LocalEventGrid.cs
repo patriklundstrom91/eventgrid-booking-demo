@@ -36,7 +36,6 @@ namespace functions
                 return bad;
             }
 
-            // FIX 1: Case-insensitive JSON
             var bookingEvent = JsonSerializer.Deserialize<BookingCreatedEvent>(
                 body,
                 new JsonSerializerOptions { PropertyNameCaseInsensitive = true }
@@ -49,7 +48,6 @@ namespace functions
                 return bad;
             }
 
-            // FIX 2: Correct Event Grid envelope
             var eventGridEnvelope = new[]
             {
                 new
@@ -66,7 +64,6 @@ namespace functions
             var json = JsonSerializer.Serialize(eventGridEnvelope);
             _logger.LogInformation("Forwarding EventGrid envelope: {json}", json);
 
-            // FIX 3: Correct EventGridTrigger headers
             var requestMessage = new HttpRequestMessage(
                 HttpMethod.Post,
                 "http://localhost:7071/runtime/webhooks/EventGrid?functionName=BookingCreatedFunction")
@@ -76,7 +73,6 @@ namespace functions
 
             requestMessage.Headers.Add("aeg-event-type", "Notification");
 
-            // FIX 4: Send request manually
             var response = await _http.SendAsync(requestMessage);
 
             _logger.LogInformation("EventGrid webhook response: {status}", response.StatusCode);

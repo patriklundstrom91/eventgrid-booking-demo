@@ -24,6 +24,14 @@ namespace functions
         [Function("BookingCreatedFunction")]
         public async Task Run([EventGridTrigger] EventGridEvent eventGridEvent)
         {
+            var id = eventGridEvent.Id;
+            if (IdempotencyStore.HasProcessed(id))
+            {
+                _logger.LogInformation($"Skipping duplicate BookingCreated for {id}");
+                return;
+            }
+            IdempotencyStore.MarkProcessed(id);
+
             _logger.LogInformation("RAW DATA: " + eventGridEvent.Data.ToString());
 
             _logger.LogInformation("BookingCreatedFunction triggered with event: {data}", eventGridEvent.Data.ToString());

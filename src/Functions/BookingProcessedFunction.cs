@@ -17,6 +17,13 @@ namespace functions
         [Function("BookingProcessedFunction")]
         public void Run([EventGridTrigger] EventGridEvent eventGridEvent)
         {
+            var id = eventGridEvent.Id;
+            if (IdempotencyStore.HasProcessed(id))
+            {
+                _logger.LogInformation($"Skipping duplicate BookingProcessed for {id}");
+                return;
+            }
+            IdempotencyStore.MarkProcessed(id);
             var json = eventGridEvent.Data.ToString();
             var processed = JsonSerializer.Deserialize<BookingProcessedEvent>(json);
 

@@ -25,6 +25,14 @@ namespace functions
         [Function("BookingValidatedFunction")]
         public async Task Run([EventGridTrigger] EventGridEvent eventGridEvent)
         {
+            var id = eventGridEvent.Id;
+            if (IdempotencyStore.HasProcessed(id))
+            {
+                _logger.LogInformation($"Skipping duplicate BookingValidated for {id}");
+                return;
+            }
+            IdempotencyStore.MarkProcessed(id);
+
             var json = eventGridEvent.Data.ToString();
             var validated = JsonSerializer.Deserialize<BookingValidatedEvent>(json);
 
