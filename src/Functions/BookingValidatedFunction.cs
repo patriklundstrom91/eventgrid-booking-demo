@@ -1,89 +1,92 @@
+using System;
+using System.Text.Json;
+using System.Threading.Tasks;
 using Azure.Messaging.EventGrid;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 using Domain.Events;
-using System.Text.Json;
-using System;
-using System.Net.Http;
-using System.Text;
-using System.Threading.Tasks;
+using Domain.Models;
 
 namespace functions
 {
     public class BookingValidatedFunction
     {
-        private readonly ILogger _logger;
-        private readonly HttpClient _http;
+        private readonly EventService _eventService;
+        private readonly ILogger<BookingValidatedFunction> _logger;
 
-
-        public BookingValidatedFunction(ILoggerFactory loggerFactory)
+        public BookingValidatedFunction(EventService eventService, ILogger<BookingValidatedFunction> logger)
         {
-            _logger = loggerFactory.CreateLogger<BookingValidatedFunction>();
-            _http = new HttpClient();
+            _eventService = eventService ?? throw new ArgumentNullException(nameof(eventService));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
         [Function("BookingValidatedFunction")]
         public async Task Run([EventGridTrigger] EventGridEvent eventGridEvent)
         {
-            var id = eventGridEvent.Id;
-            if (IdempotencyStore.HasProcessed(id))
+            try
             {
-                _logger.LogInformation($"Skipping duplicate BookingValidated for {id}");
-                return;
-            }
-            IdempotencyStore.MarkProcessed(id);
-
-            var json = eventGridEvent.Data.ToString();
-            var validated = JsonSerializer.Deserialize<BookingValidatedEvent>(json);
-
-            _logger.LogInformation(
-                "BookingValidatedFunction triggered: {bookingId} validated at {time}",
-                validated.BookingId,
-                validated.ValidatedAt
-            );
-
-            var processedEvent = new BookingProcessedEvent(
-                validated.BookingId,
-                validated.CustomerName,
-                validated.CreatedAt,
-                validated.ValidatedAt,
-                DateTime.UtcNow
-            );
-
-            var envelope = new[]
-            {
-                new
+                var id = eventGridEvent.Id;
+                if (IdempotencyStore.HasProcessed(id))
                 {
-                    id = Guid.NewGuid().ToString(),
-                    eventType = "BookingProcessed",
-                    subject = $"booking/{validated.BookingId}",
-                    eventTime = DateTime.UtcNow,
-                    data = processedEvent,
-                    dataVersion = "1.0"
+                    _logger.LogInformation("Skipping duplicate BookingValidated for {EventId}", id);
+                    return;
                 }
-            };
-            var jsonOut = JsonSerializer.Serialize(envelope);
+                IdempotencyStore.MarkProcessed(id);
 
-            var request = new HttpRequestMessage(
-                HttpMethod.Post,
-                "http://localhost:7071/runtime/webhooks/EventGrid?functionName=BookingProcessedFunction"
-            )
+                var json = eventGridEvent.Data?.ToString() ?? string.Empty;
+                var validated = JsonSerializer.Deserialize<BookingValidatedEvent>(json);
+                if (validated == null)
+                {
+                    _logger.LogWarning("Could not deserialize BookingValidatedEvent. EventId: {EventId} Payload: {Payload}", id, json);
+                    return;
+                }
+
+                _logger.LogInformation("BookingValidatedFunction triggered for bookingId: {BookingId}", validated.BookingId);
+
+                var processedEvent = new BookingProcessedEvent(
+                    validated.BookingId,
+                    validated.CustomerName,
+                    validated.CreatedAt,
+                    validated.ValidatedAt,
+                    DateTime.UtcNow
+                );
+
+                var envelope = new[]
+                {
+                    new
+                    {
+                        id = Guid.NewGuid().ToString(),
+                        eventType = "BookingProcessed",
+                        subject = $"booking/{validated.BookingId}",
+                        eventTime = DateTime.UtcNow,
+                        data = processedEvent,
+                        dataVersion = "1.0"
+                    }
+                };
+
+                OutboxStore.Add(new OutboxItem(
+                    FunctionName: "BookingProcessedFunction",
+                    Body: envelope
+                ));
+
+                _logger.LogInformation("Persisted outbox item and about to push BookingValidated event for bookingId: {BookingId}", validated.BookingId);
+
+                var payload = new
+                {
+                    Type = "BookingValidated",
+                    Data = validated,
+                    Timestamp = DateTime.UtcNow
+                };
+
+                await _eventService.SaveAndPushAsync(payload);
+
+                _logger.LogInformation("Finished processing BookingValidated for bookingId: {BookingId}", validated.BookingId);
+            }
+            catch (Exception ex)
             {
-                Content = new StringContent(jsonOut, Encoding.UTF8, "application/json")
-            };
-
-            request.Headers.Add("aeg-event-type", "Notification");
-
-            var response = await _http.SendAsync(request);
-
-            _logger.LogInformation("Forwarded BookingProcessed event: {status}", response.StatusCode);
-
-            EventLogger.LogEvent(new
-            {
-                Type = "BookingValidated",
-                Data = validated,
-                Timestamp = DateTime.UtcNow
-            });
+                _logger.LogError(ex, "Error processing BookingValidated event");
+                throw;
+            }
         }
     }
 }

@@ -1,44 +1,64 @@
+// BookingProcessedFunction.cs
+using System;
+using System.Text.Json;
+using System.Threading.Tasks;
 using Azure.Messaging.EventGrid;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 using Domain.Events;
-using System.Text.Json;
-using System;
 
 namespace functions
 {
     public class BookingProcessedFunction
     {
-        private readonly ILogger _logger;
-        public BookingProcessedFunction(ILoggerFactory loggerFactory)
+        private readonly EventService _eventService;
+        private readonly ILogger<BookingProcessedFunction> _logger;
+
+        public BookingProcessedFunction(EventService eventService, ILogger<BookingProcessedFunction> logger)
         {
-            _logger = loggerFactory.CreateLogger<BookingProcessedFunction>();
+            _eventService = eventService ?? throw new ArgumentNullException(nameof(eventService));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
+
         [Function("BookingProcessedFunction")]
-        public void Run([EventGridTrigger] EventGridEvent eventGridEvent)
+        public async Task Run([EventGridTrigger] EventGridEvent eventGridEvent)
         {
-            var id = eventGridEvent.Id;
-            if (IdempotencyStore.HasProcessed(id))
+            try
             {
-                _logger.LogInformation($"Skipping duplicate BookingProcessed for {id}");
-                return;
+                var id = eventGridEvent.Id;
+                if (IdempotencyStore.HasProcessed(id))
+                {
+                    _logger.LogInformation("Skipping duplicate BookingProcessed for {EventId}", id);
+                    return;
+                }
+                IdempotencyStore.MarkProcessed(id);
+
+                var json = eventGridEvent.Data?.ToString() ?? string.Empty;
+                var processed = JsonSerializer.Deserialize<BookingProcessedEvent>(json);
+                if (processed == null)
+                {
+                    _logger.LogWarning("Could not deserialize BookingProcessedEvent. EventId: {EventId} Payload: {Payload}", id, json);
+                    return;
+                }
+
+                _logger.LogInformation("BookingProcessedFunction triggered for bookingId: {BookingId}", processed.BookingId);
+
+                var payload = new
+                {
+                    Type = "BookingProcessed",
+                    Data = processed,
+                    Timestamp = DateTime.UtcNow
+                };
+
+                await _eventService.SaveAndPushAsync(payload);
+
+                _logger.LogInformation("Finished processing BookingProcessed for bookingId: {BookingId}", processed.BookingId);
             }
-            IdempotencyStore.MarkProcessed(id);
-            var json = eventGridEvent.Data.ToString();
-            var processed = JsonSerializer.Deserialize<BookingProcessedEvent>(json);
-
-            _logger.LogInformation(
-                "BookingProcessedFunction triggered: Booking {bookingId} processed at {time}",
-                processed.BookingId,
-                processed.ProcessedAt
-            );
-
-            EventLogger.LogEvent(new
+            catch (Exception ex)
             {
-                Type = "BookingProcessed",
-                Data = processed,
-                Timestamp = DateTime.UtcNow
-            });
+                _logger.LogError(ex, "Error processing BookingProcessed event");
+                throw;
+            }
         }
     }
 }
